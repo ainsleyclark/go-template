@@ -1,0 +1,46 @@
+name: Commits
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  style:
+    # Dependabot writes its own messages ("chore(deps): bump …").
+    if: github.event.pull_request.user.login != 'dependabot[bot]' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check pull request title
+        if: github.event_name == 'pull_request'
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          printf '%s\n' "$TITLE" > "$RUNNER_TEMP/title"
+          sh .githooks/commit-msg "$RUNNER_TEMP/title"
+
+      - name: Check commit messages
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.event.after }}
+        run: |
+          # A new branch has no "before", so check only the pushed commit.
+          if [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            range="-1 $HEAD"
+          else
+            range="$BASE..$HEAD"
+          fi
+          status=0
+          for sha in $(git rev-list --no-merges $range); do
+            git log -1 --format=%B "$sha" > "$RUNNER_TEMP/msg"
+            sh .githooks/commit-msg "$RUNNER_TEMP/msg" || { echo "  in $sha"; status=1; }
+          done
+          exit $status

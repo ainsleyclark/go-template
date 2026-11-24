@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Checks that a commit message follows the commit style in CLAUDE.md:
+#
+#   <type>: <Description>
+#   <type>(<scope>): <Description>
+#
+# Git runs this as a commit-msg hook once `make setup` has pointed core.hooksPath at .githooks.
+# CI runs it over every commit and the title of every pull request.
+
+set -eu
+
+types='feat|fix|docs|style|refactor|perf|test|chore'
+subject=$(head -n 1 "$1")
+
+case "$subject" in
+	# Messages git writes itself.
+	"Merge "* | "Revert "* | "fixup! "* | "squash! "* | "amend! "*) exit 0 ;;
+esac
+
+if printf '%s\n' "$subject" | grep -Eq "^($types)(\([a-z0-9._/-]+\))?!?: [A-Z0-9]"; then
+	exit 0
+fi
+
+cat >&2 <<EOF
+Commit message does not follow the commit style:
+
+  $subject
+
+Use "<type>: <Description>", with a capitalised description, where <type> is one of:
+  ${types}
+
+Examples:
+  feat: Add user authentication
+  fix: Resolve memory leak in cache
+  docs: Update API documentation
+EOF
+exit 1

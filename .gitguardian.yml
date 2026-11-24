@@ -1,0 +1,5 @@
+# GitGuardian configuration
+# Excludes test fixtures with intentional test credentials
+
+paths-to-exclude:
+  - "**/testdata/"

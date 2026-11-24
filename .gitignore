@@ -7,15 +7,15 @@
 *.dll
 *.so
 *.dylib
+/bin/
 
 # Test binary, built with `go test -c`
 *.test
 
 # Code coverage profiles and other test artifacts
 *.out
-coverage.html
-coverage.txt
-coverage.xml
+coverage.*
+!coverage.go
 *.coverprofile
 profile.cov
 
@@ -28,7 +28,14 @@ go.work.sum
 
 # env file
 .env
+.env.*
+!.env.example
 
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+.vscode/
+
+# Misc
+.DS_Store
+.cache/
+/tmp/
